@@ -109,7 +109,7 @@ redirects or chain different applications together.
 After the request is dispatched and a response is generated and sent,
 the request context is popped, which then pops the application context.
 Immediately before they are popped, the :meth:`~Flask.teardown_request`
-and :meth:`~Flask.teardown_appcontext` functions are are executed. These
+and :meth:`~Flask.teardown_appcontext` functions are executed. These
 execute even if an unhandled exception occurred during dispatch.
 
 
@@ -193,14 +193,13 @@ contexts until the with block exits.
 
     # teardown functions are called after the context with block exits
 
-    with app.test_client():
+    with app.test_client() as client:
         client.get('/')
         # the contexts are not popped even though the request ended
         print(request.path)
 
     # the contexts are popped and teardown functions are called after
     # the client with block exists
-
 
 Signals
 ~~~~~~~

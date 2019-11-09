@@ -25,7 +25,7 @@ bootstrapping code for our application::
     from werkzeug.utils import secure_filename
 
     UPLOAD_FOLDER = '/path/to/the/uploads'
-    ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+    ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
     app = Flask(__name__)
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -65,7 +65,7 @@ the file and redirects the user to the URL for the uploaded file::
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                return redirect(url_for('upload_file',
+                return redirect(url_for('uploaded_file',
                                         filename=filename))
         return '''
         <!doctype html>
@@ -121,7 +121,7 @@ Alternatively you can register `uploaded_file` as `build_only` rule and
 use the :class:`~werkzeug.wsgi.SharedDataMiddleware`.  This also works with
 older versions of Flask::
 
-    from werkzeug import SharedDataMiddleware
+    from werkzeug.middleware.shared_data import SharedDataMiddleware
     app.add_url_rule('/uploads/<filename>', 'uploaded_file',
                      build_only=True)
     app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
@@ -147,7 +147,7 @@ config key::
     from flask import Flask, Request
 
     app = Flask(__name__)
-    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1000 * 1000
 
 The code above will limit the maximum allowed payload to 16 megabytes.
 If a larger file is transmitted, Flask will raise a

@@ -31,6 +31,7 @@ Incoming Request Data
 .. autoclass:: Request
    :members:
    :inherited-members:
+   :exclude-members: json_module
 
    .. attribute:: environ
 
@@ -43,9 +44,9 @@ Incoming Request Data
    .. attribute:: base_url
    .. attribute:: url_root
 
-      Provides different ways to look at the current `IRI
-      <http://tools.ietf.org/html/rfc3987>`_.  Imagine your application is
-      listening on the following application root::
+      Provides different ways to look at the current :rfc:`3987`.
+      Imagine your application is listening on the following application
+      root::
 
           http://www.example.com/myapplication
 
@@ -115,7 +116,7 @@ To access the current session you can use the :class:`session` object:
 .. class:: session
 
    The session object works pretty much like an ordinary dict, with the
-   difference that it keeps track on modifications.
+   difference that it keeps track of modifications.
 
    This is a proxy.  See :ref:`notes-on-proxies` for more information.
 
@@ -312,10 +313,10 @@ JSON module:
     as string.
 
 The :func:`~htmlsafe_dumps` function of this json module is also available
-as filter called ``|tojson`` in Jinja2.  Note that inside ``script``
-tags no escaping must take place, so make sure to disable escaping
-with ``|safe`` if you intend to use it inside ``script`` tags unless
-you are using Flask 0.10 which implies that:
+as a filter called ``|tojson`` in Jinja2.  Note that in versions of Flask prior
+to Flask 0.10, you must disable escaping with ``|safe`` if you intend to use
+``|tojson`` output inside ``script`` tags. In Flask 0.10 and above, this
+happens automatically (but it's harmless to include ``|safe`` anyway).
 
 .. sourcecode:: html+jinja
 
@@ -717,7 +718,18 @@ definition for a URL that accepts an optional page::
         pass
 
 This specifies that ``/users/`` will be the URL for page one and
-``/users/page/N`` will be the URL for page `N`.
+``/users/page/N`` will be the URL for page ``N``.
+
+If a URL contains a default value, it will be redirected to its simpler
+form with a 301 redirect. In the above example, ``/users/page/1`` will
+be redirected to ``/users/``. If your route handles ``GET`` and ``POST``
+requests, make sure the default route only handles ``GET``, as redirects
+can't preserve form data. ::
+
+   @app.route('/region/', defaults={'id': 1})
+   @app.route('/region/<int:id>', methods=['GET', 'POST'])
+   def region(id):
+      pass
 
 Here are the parameters that :meth:`~flask.Flask.route` and
 :meth:`~flask.Flask.add_url_rule` accept.  The only difference is that
