@@ -1,5 +1,3 @@
-.. _testing:
-
 Testing Flask Applications
 ==========================
 
@@ -26,8 +24,8 @@ The Application
 ---------------
 
 First, we need an application to test; we will use the application from
-the :ref:`tutorial`.  If you don't have that application yet, get the
-source code from :gh:`the examples <examples/tutorial>`.
+the :doc:`tutorial/index`. If you don't have that application yet, get
+the source code from :gh:`the examples <examples/tutorial>`.
 
 So that we can import the module ``flaskr`` correctly, we need to run
 ``pip install -e .`` in the folder ``tutorial``.
@@ -50,20 +48,21 @@ the application for testing and initializes a new database::
     import pytest
 
     from flaskr import create_app
+    from flaskr.db import init_db
 
 
     @pytest.fixture
     def client():
-        db_fd, flaskr.app.config['DATABASE'] = tempfile.mkstemp()
-        flaskr.app.config['TESTING'] = True
+        db_fd, db_path = tempfile.mkstemp()
+        app = create_app({'TESTING': True, 'DATABASE': db_path})
 
-        with flaskr.app.test_client() as client:
-            with flaskr.app.app_context():
-                flaskr.init_db()
+        with app.test_client() as client:
+            with app.app_context():
+                init_db()
             yield client
 
         os.close(db_fd)
-        os.unlink(flaskr.app.config['DATABASE'])
+        os.unlink(db_path)
 
 This client fixture will be called by each individual test.  It gives us a
 simple interface to the application, where we can trigger test requests to the
@@ -121,7 +120,7 @@ Notice that our test functions begin with the word `test`; this allows
 By using ``client.get`` we can send an HTTP ``GET`` request to the
 application with the given path.  The return value will be a
 :class:`~flask.Flask.response_class` object. We can now use the
-:attr:`~werkzeug.wrappers.BaseResponse.data` attribute to inspect
+:attr:`~werkzeug.wrappers.Response.data` attribute to inspect
 the return value (as string) from the application.
 In this case, we ensure that ``'No entries here so far'``
 is part of the output.
@@ -165,16 +164,19 @@ invalid credentials.  Add this new test function::
     def test_login_logout(client):
         """Make sure login and logout works."""
 
-        rv = login(client, flaskr.app.config['USERNAME'], flaskr.app.config['PASSWORD'])
+        username = flaskr.app.config["USERNAME"]
+        password = flaskr.app.config["PASSWORD"]
+
+        rv = login(client, username, password)
         assert b'You were logged in' in rv.data
 
         rv = logout(client)
         assert b'You were logged out' in rv.data
 
-        rv = login(client, flaskr.app.config['USERNAME'] + 'x', flaskr.app.config['PASSWORD'])
+        rv = login(client, f"{username}x", password)
         assert b'Invalid username' in rv.data
 
-        rv = login(client, flaskr.app.config['USERNAME'], flaskr.app.config['PASSWORD'] + 'x')
+        rv = login(client, username, f'{password}x')
         assert b'Invalid password' in rv.data
 
 Test Adding Messages
@@ -223,20 +225,20 @@ temporarily.  With this you can access the :class:`~flask.request`,
 :class:`~flask.g` and :class:`~flask.session` objects like in view
 functions.  Here is a full example that demonstrates this approach::
 
-    import flask
+    from flask import Flask, request
 
-    app = flask.Flask(__name__)
+    app = Flask(__name__)
 
     with app.test_request_context('/?name=Peter'):
-        assert flask.request.path == '/'
-        assert flask.request.args['name'] == 'Peter'
+        assert request.path == '/'
+        assert request.args['name'] == 'Peter'
 
 All the other objects that are context bound can be used in the same
 way.
 
 If you want to test your application with different configurations and
 there does not seem to be a good way to do that, consider switching to
-application factories (see :ref:`app-factories`).
+application factories (see :doc:`patterns/appfactories`).
 
 Note however that if you are using a test request context, the
 :meth:`~flask.Flask.before_request` and :meth:`~flask.Flask.after_request`
@@ -246,7 +248,7 @@ the test request context leaves the ``with`` block.  If you do want the
 :meth:`~flask.Flask.before_request` functions to be called as well, you
 need to call :meth:`~flask.Flask.preprocess_request` yourself::
 
-    app = flask.Flask(__name__)
+    app = Flask(__name__)
 
     with app.test_request_context('/?name=Peter'):
         app.preprocess_request()
@@ -259,7 +261,7 @@ If you want to call the :meth:`~flask.Flask.after_request` functions you
 need to call into :meth:`~flask.Flask.process_response` which however
 requires that you pass it a response object::
 
-    app = flask.Flask(__name__)
+    app = Flask(__name__)
 
     with app.test_request_context('/?name=Peter'):
         resp = Response('...')
@@ -315,7 +317,7 @@ And then to use it::
         with app.test_client() as c:
             resp = c.get('/users/me')
             data = json.loads(resp.data)
-            self.assert_equal(data['username'], my_user.username)
+            assert data['username'] == my_user.username
 
 
 Keeping the Context Around
@@ -328,7 +330,7 @@ context around for a little longer so that additional introspection can
 happen.  With Flask 0.4 this is possible by using the
 :meth:`~flask.Flask.test_client` with a ``with`` block::
 
-    app = flask.Flask(__name__)
+    app = Flask(__name__)
 
     with app.test_client() as c:
         rv = c.get('/?tequila=42')
@@ -352,7 +354,7 @@ keep the context around and access :data:`flask.session`::
 
     with app.test_client() as c:
         rv = c.get('/')
-        assert flask.session['foo'] == 42
+        assert session['foo'] == 42
 
 This however does not make it possible to also modify the session or to
 access the session before a request was fired.  Starting with Flask 0.8 we
@@ -423,7 +425,7 @@ command line. ::
 
     @app.cli.command('hello')
     @click.option('--name', default='World')
-    def hello_command(name)
+    def hello_command(name):
         click.echo(f'Hello, {name}!')
 
     def test_hello():
@@ -450,7 +452,7 @@ This is useful for testing complex validation rules and custom types. ::
 
     @app.cli.command('hello')
     @click.option('--name', default='World', callback=upper)
-    def hello_command(name)
+    def hello_command(name):
         click.echo(f'Hello, {name}!')
 
     def test_hello_params():

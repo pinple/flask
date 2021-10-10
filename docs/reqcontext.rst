@@ -1,7 +1,5 @@
 .. currentmodule:: flask
 
-.. _request-context:
-
 The Request Context
 ===================
 
@@ -10,7 +8,7 @@ request. Rather than passing the request object to each function that
 runs during a request, the :data:`request` and :data:`session` proxies
 are accessed instead.
 
-This is similar to the :doc:`/appcontext`, which keeps track of the
+This is similar to :doc:`/appcontext`, which keeps track of the
 application-level data independent of a request. A corresponding
 application context is pushed when a request context is pushed.
 
@@ -35,8 +33,8 @@ Lifetime of the Context
 -----------------------
 
 When a Flask application begins handling a request, it pushes a request
-context, which also pushes an :doc:`/appcontext`. When the request ends
-it pops the request context then the application context.
+context, which also pushes an :doc:`app context </appcontext>`. When the
+request ends it pops the request context then the application context.
 
 The context is unique to each thread (or other worker type).
 :data:`request` cannot be passed to another thread, the other thread
@@ -170,8 +168,8 @@ will not fail.
 
 During testing, it can be useful to defer popping the contexts after the
 request ends, so that their data can be accessed in the test function.
-Using the :meth:`~Flask.test_client` as a ``with`` block to preserve the
-contexts until the with block exits.
+Use the :meth:`~Flask.test_client` as a ``with`` block to preserve the
+contexts until the ``with`` block exits.
 
 .. code-block:: python
 
@@ -199,7 +197,7 @@ contexts until the with block exits.
         print(request.path)
 
     # the contexts are popped and teardown functions are called after
-    # the client with block exists
+    # the client with block exits
 
 Signals
 ~~~~~~~
@@ -251,13 +249,14 @@ point to the unique object bound to each worker behind the scenes as
 described on this page.
 
 Most of the time you don't have to care about that, but there are some
-exceptions where it is good to know that this object is an actual proxy:
+exceptions where it is good to know that this object is actually a proxy:
 
 -   The proxy objects cannot fake their type as the actual object types.
     If you want to perform instance checks, you have to do that on the
     object being proxied.
--   If the specific object reference is important, for example for
-    sending :ref:`signals` or passing data to a background thread.
+-   The reference to the proxied object is needed in some situations,
+    such as sending :doc:`signals` or passing data to a background
+    thread.
 
 If you need to access the underlying object that is proxied, use the
 :meth:`~werkzeug.local.LocalProxy._get_current_object` method::

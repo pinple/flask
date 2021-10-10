@@ -23,8 +23,7 @@ to add a script statement to the bottom of your ``<body>`` to load jQuery:
 
 .. sourcecode:: html
 
-   <script type=text/javascript src="{{
-     url_for('static', filename='jquery.js') }}"></script>
+   <script src="{{ url_for('static', filename='jquery.js') }}"></script>
 
 Another method is using Google's `AJAX Libraries API
 <https://developers.google.com/speed/libraries/>`_ to load jQuery:
@@ -59,27 +58,9 @@ like this:
 
 .. sourcecode:: html+jinja
 
-   <script type=text/javascript>
-     $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+   <script>
+     $SCRIPT_ROOT = {{ request.script_root|tojson }};
    </script>
-
-The ``|safe`` is necessary in Flask before 0.10 so that Jinja does not
-escape the JSON encoded string with HTML rules.  Usually this would be
-necessary, but we are inside a ``script`` block here where different rules
-apply.
-
-.. admonition:: Information for Pros
-
-   In HTML the ``script`` tag is declared ``CDATA`` which means that entities
-   will not be parsed.  Everything until ``</script>`` is handled as script.
-   This also means that there must never be any ``</`` between the script
-   tags.  ``|tojson`` is kind enough to do the right thing here and
-   escape slashes for you (``{{ "</script>"|tojson|safe }}`` is rendered as
-   ``"<\/script>"``).
-
-   In Flask 0.10 it goes a step further and escapes all HTML tags with
-   unicode escapes.  This makes it possible for Flask to automatically
-   mark the result as HTML safe.
 
 
 JSON View Functions
@@ -127,7 +108,7 @@ usually a better idea to have that in a separate script file:
 
 .. sourcecode:: html
 
-    <script type=text/javascript>
+    <script>
       $(function() {
         $('a#calculate').bind('click', function() {
           $.getJSON($SCRIPT_ROOT + '/_add_numbers', {
