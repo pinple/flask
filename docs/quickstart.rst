@@ -468,7 +468,7 @@ Here is a basic introduction to how the :class:`~markupsafe.Markup` class works:
     >>> Markup.escape('<blink>hacker</blink>')
     Markup('&lt;blink&gt;hacker&lt;/blink&gt;')
     >>> Markup('<em>Marked up</em> &raquo; HTML').striptags()
-    'Marked up \xbb HTML'
+    'Marked up » HTML'
 
 .. versionchanged:: 0.5
 
@@ -847,8 +847,8 @@ sessions work::
     generator. Use the following command to quickly generate a value for
     :attr:`Flask.secret_key` (or :data:`SECRET_KEY`)::
 
-        $ python -c 'import os; print(os.urandom(16))'
-        b'_5#y2L"F4Q8z\n\xec]/'
+        $ python -c 'import secrets; print(secrets.token_hex())'
+        '192b9bdd22ab9ed4d12e236c78afcb9a393ec15f71bbf5dc987d54727823bcbf'
 
 A note on cookie-based sessions: Flask will take the values you put into the
 session object and serialize them into a cookie.  If you are finding some
