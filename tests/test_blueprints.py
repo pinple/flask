@@ -722,9 +722,11 @@ def test_app_request_processing(app, client):
     bp = flask.Blueprint("bp", __name__)
     evts = []
 
-    @bp.before_app_first_request
-    def before_first_request():
-        evts.append("first")
+    with pytest.deprecated_call():
+
+        @bp.before_app_first_request
+        def before_first_request():
+            evts.append("first")
 
     @bp.before_app_request
     def before_app():
@@ -946,6 +948,55 @@ def test_nesting_url_prefixes(
 
     response = client.get("/parent/child/")
     assert response.status_code == 200
+
+
+def test_nesting_subdomains(app, client) -> None:
+    subdomain = "api"
+    parent = flask.Blueprint("parent", __name__)
+    child = flask.Blueprint("child", __name__)
+
+    @child.route("/child/")
+    def index():
+        return "child"
+
+    parent.register_blueprint(child)
+    app.register_blueprint(parent, subdomain=subdomain)
+
+    client.allow_subdomain_redirects = True
+
+    domain_name = "domain.tld"
+    app.config["SERVER_NAME"] = domain_name
+    response = client.get("/child/", base_url="http://api." + domain_name)
+
+    assert response.status_code == 200
+
+
+def test_child_and_parent_subdomain(app, client) -> None:
+    child_subdomain = "api"
+    parent_subdomain = "parent"
+    parent = flask.Blueprint("parent", __name__)
+    child = flask.Blueprint("child", __name__, subdomain=child_subdomain)
+
+    @child.route("/")
+    def index():
+        return "child"
+
+    parent.register_blueprint(child)
+    app.register_blueprint(parent, subdomain=parent_subdomain)
+
+    client.allow_subdomain_redirects = True
+
+    domain_name = "domain.tld"
+    app.config["SERVER_NAME"] = domain_name
+    response = client.get(
+        "/", base_url=f"http://{child_subdomain}.{parent_subdomain}.{domain_name}"
+    )
+
+    assert response.status_code == 200
+
+    response = client.get("/", base_url=f"http://{parent_subdomain}.{domain_name}")
+
+    assert response.status_code == 404
 
 
 def test_unique_blueprint_names(app, client) -> None:

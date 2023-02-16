@@ -29,6 +29,15 @@ def test_original_win(app, client):
     assert rv.data == b"42"
 
 
+def test_simple_stream(app, client):
+    @app.route("/")
+    def index():
+        return flask.stream_template_string("{{ config }}", config=42)
+
+    rv = client.get("/")
+    assert rv.data == b"42"
+
+
 def test_request_less_rendering(app, app_ctx):
     app.config["WORLD_NAME"] = "Special World"
 
@@ -388,11 +397,9 @@ def test_templates_auto_reload_debug_run(app, monkeypatch):
     monkeypatch.setattr(werkzeug.serving, "run_simple", run_simple_mock)
 
     app.run()
-    assert not app.templates_auto_reload
     assert not app.jinja_env.auto_reload
 
     app.run(debug=True)
-    assert app.templates_auto_reload
     assert app.jinja_env.auto_reload
 
 
